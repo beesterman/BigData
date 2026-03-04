@@ -1,4 +1,4 @@
-import os, nltk, numpy, re, linecache, math, multiprocessing, threading
+import os, nltk, numpy, re, linecache, math, multiprocessing, threading, pyspark
 from nltk import word_tokenize, pos_tag, ne_chunk 
 
 
@@ -151,4 +151,32 @@ if(processing):
             stopPage = currentLine + lineSize
             currentLine += lineSize
             workerThread(fileName, startPage, stopPage)
+
+# ---------------------------------------------------
+# pyspark config
+# ---------------------------------------------------
+allWords = []
+sc = pyspark.SparkContext(appName="myApp").getOrCreate()
+sc.setLogLevel("OFF")
+print("-----------------------------------------------------------------")
+print("Begin actual Debug")
+
+
+# ---------------------------------------------------
+# pyspark code
+# ---------------------------------------------------
+#retreive all of the midpoint words
+openFile = open(f"./midpointMulti.csv", "r")
+for line in openFile:
+    allWords.append(line.strip())
+
+allWordsRdd = sc.parallelize(allWords)
+
+mappedRdd = allWordsRdd.map(lambda x: (x, 1))
+reducedRdd = mappedRdd.reduceByKey(lambda x,y: x + y)
+sortedRdd = reducedRdd.sortBy(lambda x: x[1], ascending=False)
+print(sortedRdd.take(10))
+
+
+
 
