@@ -1,1 +1,4 @@
-/Assignment1/.venv
+.venv
+.linuxVenv
+.serverVenv
+__pycache__
