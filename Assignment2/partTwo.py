@@ -1,4 +1,4 @@
-import nltk, pyspark, re, math, subprocess
+import nltk, pyspark, re, math, subprocess, os
 from pyspark.sql import SparkSession
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -55,7 +55,7 @@ def giveFinalStats(confusionMatrix: dict):
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('punkt_tab')
-subprocess.run("wget -O spamEmailDataPartial.csv http://localhost:5000")
+subprocess.run(["wget", "-O","spamEmailDataPartial.csv", "http://45.79.9.115:8000"])
 
 
 spark = SparkSession.builder.appName("NaiveBayes").getOrCreate()
@@ -144,8 +144,6 @@ class NaiveBayesSpamHam:
         else:
             prediction = 'ham'
         
-        print(f"Spam Prior: {self.logPriorPorbability('spam')}")
-        print(f"Ham Prior: {self.logPriorPorbability('ham')}")
 
         # we dont care too much about extracting the individual results just the FN TN FP TP results
         if(prediction == 'spam' and email[0] == 'spam'):
@@ -171,4 +169,19 @@ class NaiveBayesSpamHam:
 model= NaiveBayesSpamHam()
 model.train(trainSplitRdd)
 confusionMatrixDict = model.evaluate(testSplitRdd)
+
+try:
+    confusionMatrixDict['FP']
+except:
+    confusionMatrixDict['FP'] = 0
+
+try:
+    confusionMatrixDict['FN']
+except:
+    confusionMatrixDict['FN'] = 0    
+
+
+print(f"Spam Prior: {math.exp(model.logPriorPorbability('spam'))}")
+print(f"Ham Prior: {math.exp(model.logPriorPorbability('ham'))}")
 giveFinalStats(confusionMatrixDict)
+os.remove("spamEmailDataPartial.csv")
